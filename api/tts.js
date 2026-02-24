@@ -1,6 +1,6 @@
 export default async function handler(req, res) {
     const text = req.query.text || req.body?.text || '';
-    const voice = req.query.voice || 'Kore';
+    const voice = req.query.voice || 'Leda';
 
     if (!text) {
         return res.status(400).json({ error: 'Missing text parameter' });
