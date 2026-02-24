@@ -47,23 +47,23 @@
             background-color: #0056b3;
         }
 
+        #testTtsButton {
+            font-size: 2rem !important;
+            background-color: #28a745 !important;
+            margin-left: 20px;
+        }
+
         #announced-symbols {
             text-align: left;
             font-size: 5rem;
             margin-top: 40px;
             margin-bottom: 20px;
             position: fixed;
-            /* Fixes the element's position relative to the viewport */
             bottom: 0;
-            /* Places it at the bottom */
             left: 0;
-            /* Align it to the left edge of the viewport */
             width: 100%;
-            /* Makes the div span the entire width of the viewport */
-            padding: 30px 40px 30ox 30px;
-            /* Optional: Adds padding */
+            padding: 30px 40px 30px 30px;
             height: 14rem;
-
         }
 
         .announced-list {
@@ -88,12 +88,11 @@
             <p></p>
         </div>
         <button id="startButton" onclick="startGame()">Start</button>
+        <button id="testTtsButton" onclick="testTts()">🔊 Stimme testen</button>
         <div id="symbol"></div>
         <div id="description"></div>
         <div id="announced-symbols">
-            <div class="announced-list" id="announcedList">
-                <!-- Hier erscheinen die Symbole -->
-            </div>
+            <div class="announced-list" id="announcedList"></div>
         </div>
     </div>
 
@@ -178,11 +177,7 @@
             "Es geht weiter mit ",
             "Und jetzt ",
             "Weiter mit, ",
-            " ",
-            " ",
-            " ",
-            " ",
-            " ",
+            " ", " ", " ", " ", " ",
             "Es folgt ",
             "  ", " ", " ", " ", " ", " ", " ", " ",
             "Es wird spannend! ",
@@ -214,12 +209,27 @@
             return voices.find(voice => voice.name === "Google Deutsch") || voices.find(voice => voice.lang === "de-DE");
         }
 
-        function speak(text) {
-            const utterance = new SpeechSynthesisUtterance(text);
-            const germanVoice = getGermanVoice();
-            if (germanVoice) utterance.voice = germanVoice;
-            utterance.lang = "de-DE";
-            speechSynthesis.speak(utterance);
+        async function testTts() {
+            const btn = document.getElementById('testTtsButton');
+            btn.disabled = true;
+            btn.textContent = '⏳ Lädt...';
+            const text = 'Herzlich willkommen beim Neujahrs-Bingo! Gleich werden bunte Symbole gezogen – Hamburger, Feuerwerk, Champagner und viele mehr. Wer zuerst vier in einer Reihe hat, ruft laut Bingo! Viel Spaß und ein frohes neues Jahr!';
+            await speak(text);
+            btn.disabled = false;
+            btn.textContent = '🔊 Stimme testen';
+        }
+
+        async function speak(text) {
+            try {
+                const audio = new Audio('/api/tts?text=' + encodeURIComponent(text));
+                await audio.play();
+            } catch (e) {
+                const utterance = new SpeechSynthesisUtterance(text);
+                const germanVoice = getGermanVoice();
+                if (germanVoice) utterance.voice = germanVoice;
+                utterance.lang = "de-DE";
+                speechSynthesis.speak(utterance);
+            }
         }
 
         function startGame() {
@@ -228,6 +238,7 @@
             getGermanVoice();
             symbols = [...defaultSymbols];
             document.getElementById('startButton').hidden = true;
+            document.getElementById('testTtsButton').hidden = true;
             document.getElementById('regeln').hidden = true;
             document.getElementById('symbol').textContent = "Los geht's!";
             document.getElementById('description').textContent = "";
@@ -240,13 +251,9 @@
                 const randomIndex = Math.floor(Math.random() * symbols.length);
                 const selectedSymbol = symbols.splice(randomIndex, 1)[0];
                 if (selectedSymbol.img) {
-                    // Build the full URL from the UTF code
                     const animatedUrl = 'https://fonts.gstatic.com/s/e/notoemoji/latest/' + selectedSymbol.img + '/512.gif';
-
-                    // Show image with emoji as fallback
                     document.getElementById('symbol').innerHTML = '<img src="' + animatedUrl + '" alt="' + selectedSymbol.emoji + '" width="300" height="300" onerror="this.outerHTML=this.alt;">';
                 } else {
-                    // No animated version available - show static emoji
                     document.getElementById('symbol').innerHTML = selectedSymbol.emoji;
                 }
                 document.getElementById('description').textContent = selectedSymbol.text;
@@ -255,9 +262,7 @@
                 updateAnnouncedSymbols(selectedSymbol.emoji);
 
                 if (symbols.length === 0) {
-                    setTimeout(() => {
-                        stopGame();
-                    }, 5000);
+                    setTimeout(() => { stopGame(); }, 5000);
                 }
             }, Math.floor(Math.random() * 5001) + 6000);
         }
@@ -268,7 +273,7 @@
                 interval = null;
                 document.getElementById('symbol').textContent = "Ende!";
                 document.getElementById('description').textContent = "";
-                speak("Spiel ist zu Ende! Wollt ihr noch mal spielen! Dann drückt einfach auf die Taste S!")
+                speak("Spiel ist zu Ende! Wollt ihr noch mal spielen! Dann drückt einfach auf die Taste S!");
             }
         }
 
@@ -281,8 +286,7 @@
         }
 
         function clearAnnouncedSymbols() {
-            const announcedList = document.getElementById('announcedList');
-            announcedList.replaceChildren();
+            document.getElementById('announcedList').replaceChildren();
         }
 
         function pauseGame(key, symbol, text) {
@@ -290,14 +294,12 @@
                 document.getElementById('symbol').hidden = false;
                 document.getElementById('description').hidden = false;
                 document.getElementById('regeln').hidden = true;
-
                 speak("Gleich geht's weiter!");
                 document.getElementById('description').textContent = "Gleich geht's weiter";
                 isPaused = false;
                 return;
             }
             if (!isPaused) {
-
                 document.getElementById('symbol').textContent = symbol + "!";
                 document.getElementById('description').textContent = text + "!";
                 isPaused = true;
@@ -306,68 +308,34 @@
             }
         }
 
-
         document.addEventListener('keydown', event => {
-            if (event.key === 'l') {
-
-                pauseGame("L", "Linie", "Linie wurde gemeldet");
-
-            }
-
-            if (event.key === 'p') {
-                pauseGame("", "Pause", "Spiel wurde pausiert");
-
-            }
-
-            if (event.key === 'b') {
-                pauseGame("B", "Bingo", "Jemand hat endlich Bingo gemeldet! Herzlichen Glückwunsch!");
-            }
-
-            if (event.key === '2') {
-                pauseGame("2", "Duo", "Wa-as?? So schnell?! Jemand hat Duo gemeldet!");
-            }
-
-            if (event.key === '3') {
-                pauseGame("3", "Trio", "Und jetzt schon Trio!");
-            }
-
-            if (event.key === 's') {
-                startGame();
-            }
-
+            if (event.key === 'l') pauseGame("L", "Linie", "Linie wurde gemeldet");
+            if (event.key === 'p') pauseGame("", "Pause", "Spiel wurde pausiert");
+            if (event.key === 'b') pauseGame("B", "Bingo", "Jemand hat endlich Bingo gemeldet! Herzlichen Glückwunsch!");
+            if (event.key === '2') pauseGame("2", "Duo", "Wa-as?? So schnell?! Jemand hat Duo gemeldet!");
+            if (event.key === '3') pauseGame("3", "Trio", "Und jetzt schon Trio!");
+            if (event.key === 's') startGame();
             if (event.key == 'q') {
                 if (isPaused) {
                     isPaused = false;
                     document.getElementById('regeln').hidden = true;
                     document.getElementById('symbol').hidden = false;
                     document.getElementById('description').hidden = false;
-
-                    return;
-                }
-                if (!isPaused) {
-                    isPaused = true;
-                }
+                } else { isPaused = true; }
             }
-
             if (event.key == 'r') {
                 if (isPaused) {
                     isPaused = false;
                     document.getElementById('regeln').hidden = true;
                     document.getElementById('symbol').hidden = false;
                     document.getElementById('description').hidden = false;
-
-                    return;
-                }
-                if (!isPaused) {
+                } else {
                     document.getElementById('regeln').hidden = false;
                     document.getElementById('symbol').hidden = true;
                     document.getElementById('description').hidden = true;
-
-
                     isPaused = true;
                 }
             }
-
         });
     </script>
 </body>
