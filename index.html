@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Silvester Bingo</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 0;
+        }
+
+        #container {
+            margin-top: 50px;
+        }
+
+        #symbol {
+            font-size: 18rem;
+            font-weight: bold;
+            color: #333;
+            margin: 20px 0;
+        }
+
+        #description {
+            font-size: 3rem;
+            font-weight: normal;
+            color: #555;
+            margin-bottom: 3em;
+        }
+
+        button {
+            font-size: 10rem;
+            padding: 10px 20px;
+            margin-top: 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        #announced-symbols {
+            text-align: left;
+            font-size: 5rem;
+            margin-top: 40px;
+            margin-bottom: 20px;
+            position: fixed;
+            /* Fixes the element's position relative to the viewport */
+            bottom: 0;
+            /* Places it at the bottom */
+            left: 0;
+            /* Align it to the left edge of the viewport */
+            width: 100%;
+            /* Makes the div span the entire width of the viewport */
+            padding: 30px 40px 30ox 30px;
+            /* Optional: Adds padding */
+            height: 14rem;
+
+        }
+
+        .announced-list {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: left;
+            gap: 5px;
+        }
+
+        .symbol-item {
+            font-size: 3rem;
+            text-align: center;
+            padding: 2px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="container">
+        <h1>Neujahrs-Tombola</h1>
+        <div id="regeln"><img id="regeln" src="regeln.png" width="40%">
+            <p></p>
+        </div>
+        <button id="startButton" onclick="startGame()">Start</button>
+        <div id="symbol"></div>
+        <div id="description"></div>
+        <div id="announced-symbols">
+            <div class="announced-list" id="announcedList">
+                <!-- Hier erscheinen die Symbole -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const defaultSymbols = [
+            { "emoji": "🍔", "img": "1f354", "text": "Hamburger" },
+            { "emoji": "🍾", "img": "1f37e", "text": "Champagner" },
+            { "emoji": "🌯", "img": "1f32f", "text": "Burrito" },
+            { "emoji": "🥓", "img": "1f953", "text": "Speck" },
+            { "emoji": "🎈", "img": "1f388", "text": "Ballon" },
+            { "emoji": "🥩", "img": "1f969", "text": "Steak" },
+            { "emoji": "🎊", "img": "1f38a", "text": "Konfetti" },
+            { "emoji": "🥯", "img": "1f96f", "text": "Bagel" },
+            { "emoji": "🎆", "img": "1f386", "text": "Feuerwerk" },
+            { "emoji": "🧀", "img": "1f9c0", "text": "Käse" },
+            { "emoji": "🎂", "img": "1f382", "text": "Kuchen" },
+            { "emoji": "🥒", "img": "1f952", "text": "Gurke" },
+            { "emoji": "🕯️", "img": "1f56f_fe0f", "text": "Kerze" },
+            { "emoji": "🌽", "img": "1f33d", "text": "Mais" },
+            { "emoji": "🐸", "img": "1f438", "text": "Frosch" },
+            { "emoji": "🥔", "img": "1f954", "text": "Kartoffel" },
+            { "emoji": "📯", "img": "1f4ef", "text": "Lufttröte" },
+            { "emoji": "🧅", "img": "1f9c5", "text": "Zwiebel" },
+            { "emoji": "🎁", "img": "1f381", "text": "Geschenkbox" },
+            { "emoji": "🌍", "img": "1f30d", "text": "Erde" },
+            { "emoji": "🍕", "img": "1f355", "text": "Pizza" },
+            { "emoji": "🌷", "img": "1f337", "text": "Tulpe" },
+            { "emoji": "🌞", "img": "1f31e", "text": "Sonne" },
+            { "emoji": "🍀", "img": "1f340", "text": "Glücksklee" },
+            { "emoji": "🍦", "img": "1f366", "text": "Eiscreme" },
+            { "emoji": "🍉", "img": "1f349", "text": "Wassermelone" },
+            { "emoji": "🍸", "img": "1f378", "text": "Cocktail" },
+            { "emoji": "🍒", "img": "1f352", "text": "Kirschen" },
+            { "emoji": "🍺", "img": "1f37a", "text": "Bierkrug" },
+            { "emoji": "🍍", "img": "1f34d", "text": "Ananas" },
+            { "emoji": "🍿", "img": "1f37f", "text": "Popcorn" },
+            { "emoji": "🥥", "img": "1f965", "text": "Kokosnuss" },
+            { "emoji": "🧁", "img": "1f9c1", "text": "Cupcake" },
+            { "emoji": "🍊", "img": "1f34a", "text": "Orange" },
+            { "emoji": "🍌", "img": "1f34c", "text": "Banane" },
+            { "emoji": "🍬", "img": "1f36c", "text": "Bonbon" },
+            { "emoji": "🍳", "img": "1f373", "text": "Spiegelei" },
+            { "emoji": "🍋", "img": "1f34b", "text": "Zitrone" },
+            { "emoji": "🍖", "img": "1f356", "text": "Fleisch" },
+            { "emoji": "❄️", "img": "2744_fe0f", "text": "Schneeflocke" },
+            { "emoji": "🥬", "img": "1f96c", "text": "Salat" },
+            { "emoji": "🐝", "img": "1f41d", "text": "Biene - oder doch Hummel?" },
+            { "emoji": "🍅", "img": "1f345", "text": "Tomate" },
+            { "emoji": "⛄", "img": "26c4", "text": "Schneemann" },
+            { "emoji": "🍄", "img": "1f344", "text": "Pilz" },
+            { "emoji": "⭐", "img": "2b50", "text": "Stern" },
+            { "emoji": "🎉", "img": "1f389", "text": "PartyHut" },
+            { "emoji": "🕰️", "img": "1f570_fe0f", "text": "Neujahrs-Uhr" },
+            { "emoji": "🔔", "img": "1f514", "text": "Glocke" },
+            { "emoji": "🎒", "img": "1f392", "text": "Rucksack" },
+            { "emoji": "🛷", "img": "1f6f7", "text": "Schlitten" },
+            { "emoji": "⚽", "img": "26bd", "text": "Fußball" },
+            { "emoji": "🏀", "img": "1f3c0", "text": "Basketball" },
+            { "emoji": "🎾", "img": "1f3be", "text": "Tennisball" },
+            { "emoji": "🏆", "img": "1f3c6", "text": "Pokal" },
+            { "emoji": "💧", "img": "1f4a7", "text": "Wassertropfen" },
+            { "emoji": "🔥", "img": "1f525", "text": "Feuer" },
+            { "emoji": "🌈", "img": "1f308", "text": "Regenbogen" },
+            { "emoji": "🍁", "img": "1f341", "text": "Blatt" },
+            { "emoji": "🌻", "img": "1f33b", "text": "Sonnenblume" },
+            { "emoji": "🌼", "img": "1f33c", "text": "Blume" },
+            { "emoji": "🍓", "img": "1f353", "text": "Erdbeere" },
+            { "emoji": "🍇", "img": "1f347", "text": "Trauben" },
+            { "emoji": "🍑", "img": "1f351", "text": "Pfirsich, oder doch ...Arsch?" },
+            { "emoji": "🥭", "img": "1f96d", "text": "Mango" },
+            { "emoji": "🥝", "img": "1f95d", "text": "Kiwi" },
+            { "emoji": "🍏", "img": "1f34f", "text": "Grüner Apfel" },
+            { "emoji": "🌮", "img": "1f32e", "text": "Taco" },
+            { "emoji": "🍗", "img": "1f357", "text": "Hähnchenkeule" },
+            { "emoji": "🍞", "img": "1f35e", "text": "Brot" },
+            { "emoji": "🥕", "img": "1f955", "text": "Karotte" },
+            { "emoji": "🧄", "img": "1f9c4", "text": "Knoblauch" },
+            { "emoji": "🌙", "img": "1f319", "text": "Mond" }
+        ];
+
+        const ansagen = ["Das nächste Bild ist ",
+            "Es geht weiter mit ",
+            "Und jetzt ",
+            "Weiter mit, ",
+            " ",
+            " ",
+            " ",
+            " ",
+            " ",
+            "Es folgt ",
+            "  ", " ", " ", " ", " ", " ", " ", " ",
+            "Es wird spannend! ",
+            "Nun kommt ",
+            "Nächstes Bild, ",
+            "Oh my God! ",
+            "Ach cool!",
+            "Das gibt ganz Sicher bald Bingo! ",
+            "Weiter geht's mit ",
+            "Wie bitte?",
+            "Es ist so spannend!",
+            "Gucci-cool,",
+            "Und jetzt noch das!",
+            "Oh yeah!",
+            "Oh nein!",
+            "Wow! ",
+            "Oha!",
+            "Na Endlich! ",
+            "Was zum...?",
+            "What the ... !!?"
+        ];
+
+        let symbols = [...defaultSymbols];
+        let interval = null;
+        let isPaused = false;
+
+        function getGermanVoice() {
+            const voices = speechSynthesis.getVoices();
+            return voices.find(voice => voice.name === "Google Deutsch") || voices.find(voice => voice.lang === "de-DE");
+        }
+
+        function speak(text) {
+            const utterance = new SpeechSynthesisUtterance(text);
+            const germanVoice = getGermanVoice();
+            if (germanVoice) utterance.voice = germanVoice;
+            utterance.lang = "de-DE";
+            speechSynthesis.speak(utterance);
+        }
+
+        function startGame() {
+            isPaused = false;
+            clearAnnouncedSymbols();
+            getGermanVoice();
+            symbols = [...defaultSymbols];
+            document.getElementById('startButton').hidden = true;
+            document.getElementById('regeln').hidden = true;
+            document.getElementById('symbol').textContent = "Los geht's!";
+            document.getElementById('description').textContent = "";
+
+            if (interval) clearInterval(interval);
+
+            interval = setInterval(() => {
+                if (isPaused || symbols.length === 0) return;
+
+                const randomIndex = Math.floor(Math.random() * symbols.length);
+                const selectedSymbol = symbols.splice(randomIndex, 1)[0];
+                if (selectedSymbol.img) {
+                    // Build the full URL from the UTF code
+                    const animatedUrl = 'https://fonts.gstatic.com/s/e/notoemoji/latest/' + selectedSymbol.img + '/512.gif';
+
+                    // Show image with emoji as fallback
+                    document.getElementById('symbol').innerHTML = '<img src="' + animatedUrl + '" alt="' + selectedSymbol.emoji + '" width="300" height="300" onerror="this.outerHTML=this.alt;">';
+                } else {
+                    // No animated version available - show static emoji
+                    document.getElementById('symbol').innerHTML = selectedSymbol.emoji;
+                }
+                document.getElementById('description').textContent = selectedSymbol.text;
+
+                speak(ansagen[Math.floor(Math.random() * ansagen.length)] + "--" + selectedSymbol.text + "!!");
+                updateAnnouncedSymbols(selectedSymbol.emoji);
+
+                if (symbols.length === 0) {
+                    setTimeout(() => {
+                        stopGame();
+                    }, 5000);
+                }
+            }, Math.floor(Math.random() * 5001) + 6000);
+        }
+
+        function stopGame() {
+            if (interval) {
+                clearInterval(interval);
+                interval = null;
+                document.getElementById('symbol').textContent = "Ende!";
+                document.getElementById('description').textContent = "";
+                speak("Spiel ist zu Ende! Wollt ihr noch mal spielen! Dann drückt einfach auf die Taste S!")
+            }
+        }
+
+        function updateAnnouncedSymbols(emoji) {
+            const announcedList = document.getElementById('announcedList');
+            const symbolElement = document.createElement('div');
+            symbolElement.className = 'symbol-item';
+            symbolElement.innerHTML = `${emoji} <br>`;
+            announcedList.appendChild(symbolElement);
+        }
+
+        function clearAnnouncedSymbols() {
+            const announcedList = document.getElementById('announcedList');
+            announcedList.replaceChildren();
+        }
+
+        function pauseGame(key, symbol, text) {
+            if (isPaused) {
+                document.getElementById('symbol').hidden = false;
+                document.getElementById('description').hidden = false;
+                document.getElementById('regeln').hidden = true;
+
+                speak("Gleich geht's weiter!");
+                document.getElementById('description').textContent = "Gleich geht's weiter";
+                isPaused = false;
+                return;
+            }
+            if (!isPaused) {
+
+                document.getElementById('symbol').textContent = symbol + "!";
+                document.getElementById('description').textContent = text + "!";
+                isPaused = true;
+                speak(text + ".");
+                updateAnnouncedSymbols(key);
+            }
+        }
+
+
+        document.addEventListener('keydown', event => {
+            if (event.key === 'l') {
+
+                pauseGame("L", "Linie", "Linie wurde gemeldet");
+
+            }
+
+            if (event.key === 'p') {
+                pauseGame("", "Pause", "Spiel wurde pausiert");
+
+            }
+
+            if (event.key === 'b') {
+                pauseGame("B", "Bingo", "Jemand hat endlich Bingo gemeldet! Herzlichen Glückwunsch!");
+            }
+
+            if (event.key === '2') {
+                pauseGame("2", "Duo", "Wa-as?? So schnell?! Jemand hat Duo gemeldet!");
+            }
+
+            if (event.key === '3') {
+                pauseGame("3", "Trio", "Und jetzt schon Trio!");
+            }
+
+            if (event.key === 's') {
+                startGame();
+            }
+
+            if (event.key == 'q') {
+                if (isPaused) {
+                    isPaused = false;
+                    document.getElementById('regeln').hidden = true;
+                    document.getElementById('symbol').hidden = false;
+                    document.getElementById('description').hidden = false;
+
+                    return;
+                }
+                if (!isPaused) {
+                    isPaused = true;
+                }
+            }
+
+            if (event.key == 'r') {
+                if (isPaused) {
+                    isPaused = false;
+                    document.getElementById('regeln').hidden = true;
+                    document.getElementById('symbol').hidden = false;
+                    document.getElementById('description').hidden = false;
+
+                    return;
+                }
+                if (!isPaused) {
+                    document.getElementById('regeln').hidden = false;
+                    document.getElementById('symbol').hidden = true;
+                    document.getElementById('description').hidden = true;
+
+
+                    isPaused = true;
+                }
+            }
+
+        });
+    </script>
+</body>
+
+</html>
